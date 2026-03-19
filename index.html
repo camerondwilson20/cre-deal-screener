@@ -1,777 +1,1242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TBJ Triangle Deal Map — South Atlantic Sites</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRE Deal Screener — Acquisition Agent</title>
 <style>
-:root{
-  --navy:#0C2340;--navy-mid:#185FA5;--navy-light:#E6F1FB;
-  --gold:#C9A84C;--ink:#1C1C1E;--muted:#6B6B70;
-  --border:#E2E2E6;--surface:#FAFAFA;--white:#FFFFFF;
-  --red:#A32D2D;--green:#1B5E20;
-  --ti-bg:#FFF3E0;--ti-fg:#7A3B00;
-  --td-bg:#F0F7E6;--td-fg:#2A5A0A;
-  --to-bg:#E6F1FB;--to-fg:#0C447C;
-  --tr-bg:#FCE4EC;--tr-fg:#880E4F;
-  --tl-bg:#F3F0E6;--tl-fg:#4A3B00;
-  --tm-bg:#FDF6E3;--tm-fg:#7A5C00;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--ink);height:100vh;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100vh;background:var(--surface)}
+  :root {
+    --bg: #0d0d0d;
+    --bg2: #141414;
+    --bg3: #1a1a1a;
+    --bg4: #202020;
+    --border: rgba(255,255,255,0.08);
+    --border-hi: rgba(255,255,255,0.16);
+    --text: #f0ede8;
+    --text2: #888;
+    --text3: #555;
+    --accent: #c8b97a;
+    --accent-dim: rgba(200,185,122,0.12);
+    --accent-border: rgba(200,185,122,0.3);
+    --go: #4caf72;
+    --go-bg: rgba(76,175,114,0.1);
+    --go-border: rgba(76,175,114,0.25);
+    --nogo: #e05a5a;
+    --nogo-bg: rgba(224,90,90,0.1);
+    --nogo-border: rgba(224,90,90,0.25);
+    --warn: #d4a03a;
+    --warn-bg: rgba(212,160,58,0.1);
+    --warn-border: rgba(212,160,58,0.25);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'IBM Plex Mono', monospace;
+    --font-sans: 'DM Sans', sans-serif;
+  }
 
-/* topbar */
-#topbar{display:flex;align-items:center;gap:8px;padding:0 14px;height:50px;background:var(--navy);border-bottom:2px solid var(--gold);flex-shrink:0;flex-wrap:wrap}
-#logo{font-size:12px;font-weight:600;color:#fff;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;margin-right:4px}
-#logo span{color:var(--gold)}
-.fbtn{font-size:11px;padding:3px 11px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.65);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.12s;white-space:nowrap}
-.fbtn:hover{background:rgba(255,255,255,0.1);color:#fff}
-.fbtn.active{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:600}
-#date-filter{font-size:11px;padding:3px 9px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);cursor:pointer;font-family:'DM Sans',sans-serif}
-#refresh-btn{margin-left:4px;font-size:11px;padding:3px 11px;border-radius:6px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.12s;white-space:nowrap}
-#refresh-btn:hover{background:var(--gold);color:var(--navy)}
-#refresh-btn:disabled{opacity:0.4;cursor:not-allowed}
-#story-count{font-size:11px;color:rgba(255,255,255,0.4);margin-left:auto;font-family:'DM Mono',monospace;white-space:nowrap}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* main */
-#main{display:flex;flex:1;overflow:hidden}
-#map{flex:1;height:100%}
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
 
-/* sidebar */
-#sidebar{width:310px;display:flex;flex-direction:column;background:var(--white);border-left:1px solid var(--border);overflow:hidden}
-#sidebar-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
-.stab{flex:1;padding:10px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;font-family:'DM Sans',sans-serif;letter-spacing:0.03em;transition:all 0.12s}
-.stab:hover{color:var(--navy)}
-.stab.active{color:var(--navy);border-bottom-color:var(--gold)}
+  /* LAYOUT */
+  .shell { display: flex; min-height: 100vh; }
 
-/* story list */
-#story-panel{flex:1;overflow-y:auto}
-.story-card{padding:10px 13px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;position:relative}
-.story-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background 0.12s}
-.story-card:hover{background:#F5F5F8}
-.story-card.hl{background:var(--navy-light)}
-.story-card.hl::before{background:var(--gold)}
-.stag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;margin-bottom:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;font-family:'DM Mono',monospace}
-.t-industrial{background:var(--ti-bg);color:var(--ti-fg)}
-.t-development{background:var(--td-bg);color:var(--td-fg)}
-.t-office{background:var(--to-bg);color:var(--to-fg)}
-.t-retail{background:var(--tr-bg);color:var(--tr-fg)}
-.t-land{background:var(--tl-bg);color:var(--tl-fg)}
-.t-manual{background:var(--tm-bg);color:var(--tm-fg)}
-.stitle{font-size:12px;font-weight:500;color:var(--ink);line-height:1.4;margin-bottom:2px}
-.smeta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
-.snotes{font-size:11px;color:#333;margin-top:4px;line-height:1.5;border-left:2px solid var(--gold);padding-left:7px}
-.slink{font-size:11px;color:var(--navy-mid);text-decoration:none;font-weight:600;display:inline-block;margin-top:4px}
-.slink:hover{text-decoration:underline}
-.ssource{font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace}
-#empty-msg{padding:28px 16px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px; min-width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: 0;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    font-family: var(--font);
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 4px;
+  }
+  .logo-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.05em; }
 
-/* add panel */
-#add-panel{display:none;flex:1;overflow-y:auto;padding:14px}
-#news-panel{display:none;flex:1;overflow-y:auto}
-.news-card{padding:10px 13px;border-bottom:1px solid var(--border)}
-.news-card h4{font-size:12px;font-weight:600;color:var(--navy);margin:0 0 4px;line-height:1.4}
-.news-card .news-meta{font-size:10px;color:var(--muted);margin-bottom:4px}
-.news-card .news-notes{font-size:11px;color:var(--ink);line-height:1.4}
-.news-card a{font-size:10px;color:var(--gold);font-weight:600;text-decoration:none}
-.news-badge{display:inline-block;background:#f0f4ff;color:#3355aa;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-right:4px;text-transform:uppercase;letter-spacing:0.05em}
-#add-panel label{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px;margin-top:11px;text-transform:uppercase;letter-spacing:0.06em;font-family:'DM Mono',monospace}
-#add-panel label:first-of-type{margin-top:0}
-#add-panel input,#add-panel select,#add-panel textarea{width:100%;padding:7px 9px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--ink);font-family:'DM Sans',sans-serif}
-#add-panel input:focus,#add-panel select:focus,#add-panel textarea:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 2px rgba(24,95,165,0.1)}
-#add-panel textarea{height:100px;resize:vertical}
-#ai-btn{margin-top:10px;width:100%;padding:8px;font-size:12px;font-weight:600;background:var(--navy);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.1s}
-#ai-btn:hover{background:var(--navy-mid)}
-#ai-btn:disabled{opacity:0.45;cursor:not-allowed}
-#ai-status{font-size:11px;color:var(--navy-mid);margin-top:6px;min-height:14px;text-align:center}
-.divider{height:1px;background:var(--border);margin:12px 0}
-#add-btn{width:100%;padding:8px;font-size:12px;font-weight:600;background:var(--gold);color:var(--navy);border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.1s}
-#add-btn:hover{background:#b8943d}
-#add-msg{font-size:11px;margin-top:6px;text-align:center;min-height:14px}
+  .nav-section { padding: 16px 12px 8px; }
+  .nav-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text3); padding: 0 8px; margin-bottom: 6px; font-family: var(--font); }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border-radius: var(--radius); cursor: pointer; font-size: 13px; color: var(--text2);
+    transition: all 0.15s; border: 1px solid transparent;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-border); }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; flex-shrink: 0; }
 
-/* legend */
-#legend{display:flex;gap:8px;flex-wrap:wrap;padding:6px 13px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)}
-.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
-.leg-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.18)}
+  .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
+  .api-status {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); font-family: var(--font);
+  }
+  .api-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
+  .api-dot.connected { background: var(--go); }
 
-/* popup */
-.leaflet-popup-content-wrapper{border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,0.15);font-family:'DM Sans',sans-serif}
-.leaflet-popup-content{margin:11px 13px;min-width:200px}
-.p-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;padding:2px 7px;border-radius:8px;display:inline-block;margin-bottom:4px;font-family:'DM Mono',monospace}
-.p-title{font-weight:600;font-size:12px;line-height:1.4;margin-bottom:3px;color:var(--ink)}
-.p-meta{font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace}
-.p-notes{font-size:11px;color:#333;margin-bottom:5px;line-height:1.5;border-left:2px solid var(--gold);padding-left:6px;font-style:italic}
-.p-link{font-size:11px;font-weight:600;color:var(--navy-mid);text-decoration:none}
-.p-link:hover{text-decoration:underline}
-.p-source{font-size:10px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace}
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .phase-chip {
+    font-family: var(--font); font-size: 10px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent); background: var(--accent-dim);
+    border: 1px solid var(--accent-border); padding: 3px 10px; border-radius: 20px;
+  }
+  .topbar-title { font-size: 15px; font-weight: 500; }
+  .topbar-right { display: flex; gap: 8px; }
+
+  .btn {
+    font-family: var(--font-sans); font-size: 12px; padding: 7px 14px;
+    border-radius: var(--radius); border: 1px solid var(--border-hi);
+    background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border-hi); }
+  .btn-primary {
+    background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600;
+  }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); color: var(--bg); }
+
+  /* PANELS */
+  .panel-wrap { display: none; padding: 32px; max-width: 860px; }
+  .panel-wrap.active { display: block; }
+
+  .section-head { margin-bottom: 24px; }
+  .section-head h2 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .section-head p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 16px;
+  }
+  .card-label {
+    font-family: var(--font); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 14px;
+  }
+
+  /* FORMS */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-family: var(--font); letter-spacing: 0.05em; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-family: var(--font-sans); font-size: 13px;
+    padding: 9px 12px; outline: none; transition: border 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent-border); box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+  .field select { cursor: pointer; }
+  .field textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+  .field input[type="password"] { letter-spacing: 0.1em; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .prefix-wrap { position: relative; }
+  .prefix-wrap .pfx { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text3); pointer-events: none; }
+  .prefix-wrap .sfx { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text3); pointer-events: none; }
+  .prefix-wrap input { padding-left: 22px; }
+  .prefix-wrap.has-sfx input { padding-right: 32px; }
+
+  /* TOGGLE BUTTONS */
+  .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tog {
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent; color: var(--text2);
+    cursor: pointer; transition: all 0.15s; font-family: var(--font);
+    letter-spacing: 0.04em;
+  }
+  .tog.on { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-border); }
+  .tog:hover:not(.on) { border-color: var(--border-hi); color: var(--text); }
+
+  /* CHECKBOXES */
+  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .check-row { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .check-row input[type="checkbox"] { margin-top: 2px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .check-row:hover { color: var(--text); }
+
+  /* RANGE SLIDER */
+  input[type="range"] {
+    -webkit-appearance: none; width: 100%; height: 4px;
+    background: var(--bg4); border-radius: 2px; outline: none;
+    border: none; padding: 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+    border: 2px solid var(--bg2);
+  }
+
+  /* ALERTS */
+  .alert { padding: 10px 14px; border-radius: var(--radius); font-size: 12px; margin-top: 10px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+  .alert-danger { background: var(--nogo-bg); border: 1px solid var(--nogo-border); color: var(--nogo); }
+  .alert-warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn); }
+  .alert-info { background: var(--accent-dim); border: 1px solid var(--accent-border); color: var(--accent); }
+  .alert-flag { font-family: var(--font); font-size: 10px; flex-shrink: 0; padding-top: 1px; }
+
+  /* SUBMIT */
+  .submit-row { margin-top: 8px; }
+  .submit-btn {
+    width: 100%; padding: 13px; font-size: 14px; font-weight: 600;
+    background: var(--accent); color: var(--bg); border: none;
+    border-radius: var(--radius-lg); cursor: pointer; font-family: var(--font-sans);
+    letter-spacing: 0.02em; transition: opacity 0.15s, transform 0.1s;
+  }
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* LOADING */
+  .log-box {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; font-family: var(--font);
+    font-size: 12px; line-height: 2; color: var(--text3); min-height: 160px;
+  }
+  .log-line { opacity: 0; animation: fadeUp 0.25s forwards; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  .log-cursor { display: inline-block; width: 7px; height: 12px; background: var(--accent); animation: blink 1s step-end infinite; vertical-align: middle; margin-left: 2px; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* RESULT */
+  .verdict-banner {
+    display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+    border-radius: var(--radius-lg); border: 1px solid; margin-bottom: 16px;
+  }
+  .verdict-go { background: var(--go-bg); border-color: var(--go-border); }
+  .verdict-nogo { background: var(--nogo-bg); border-color: var(--nogo-border); }
+  .verdict-conditional { background: var(--warn-bg); border-color: var(--warn-border); }
+
+  .verdict-icon { font-size: 24px; flex-shrink: 0; }
+  .verdict-label { font-family: var(--font); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.7; margin-bottom: 2px; }
+  .verdict-title { font-size: 18px; font-weight: 500; }
+
+  .score-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .score-cell { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .sc-label { font-family: var(--font); font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .sc-val { font-size: 20px; font-weight: 500; font-family: var(--font); }
+  .sc-status { font-size: 11px; margin-top: 3px; font-family: var(--font); }
+  .c-go { color: var(--go); }
+  .c-nogo { color: var(--nogo); }
+  .c-warn { color: var(--warn); }
+  .c-muted { color: var(--text3); }
+
+  .result-body {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px 24px;
+  }
+  .result-body h3 { font-size: 13px; font-family: var(--font); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+  .result-prose { font-size: 14px; line-height: 1.85; color: var(--text); white-space: pre-wrap; }
+
+  /* SETTINGS — BUY BOX EDITOR */
+  .criteria-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .criteria-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .criteria-info { flex: 1; }
+  .criteria-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .criteria-desc { font-size: 12px; color: var(--text3); line-height: 1.4; }
+  .criteria-input { width: 100px; text-align: right; }
+  .criteria-input input { text-align: right; padding: 6px 10px; font-family: var(--font); font-size: 13px; }
+  .criteria-unit { font-size: 12px; color: var(--text3); min-width: 24px; font-family: var(--font); }
+
+  .saved-badge {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--go);
+    font-family: var(--font); opacity: 0; transition: opacity 0.4s;
+  }
+  .saved-badge.show { opacity: 1; }
+
+  /* HISTORY */
+  .history-item {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 18px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .history-item:hover { border-color: var(--border-hi); }
+  .hist-verdict { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .hist-go { background: var(--go); }
+  .hist-nogo { background: var(--nogo); }
+  .hist-warn { background: var(--warn); }
+  .hist-info { flex: 1; min-width: 0; }
+  .hist-address { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-meta { font-size: 11px; color: var(--text3); font-family: var(--font); margin-top: 2px; }
+  .hist-time { font-size: 11px; color: var(--text3); font-family: var(--font); flex-shrink: 0; }
+
+  .empty-state { text-align: center; padding: 48px 0; color: var(--text3); font-size: 13px; line-height: 2; }
+  .empty-state span { display: block; font-size: 32px; margin-bottom: 8px; opacity: 0.3; }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .topbar { padding: 14px 16px; }
+    .panel-wrap { padding: 20px 16px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .score-row { grid-template-columns: 1fr; }
+    .check-grid { grid-template-columns: 1fr; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+  /* API KEY MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-box {
+    background: var(--bg2); border: 1px solid var(--border-hi);
+    border-radius: var(--radius-lg); padding: 28px 32px; max-width: 460px; width: 100%;
+  }
+  .modal-box h2 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+  .modal-box p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="app">
-  <div id="topbar">
-    <div id="logo">South Atlantic Sites <span>&#9679;</span> TBJ Deal Map</div>
-    <button class="fbtn active" data-tag="all">All</button>
-    <button class="fbtn" data-tag="industrial">Industrial</button>
-    <button class="fbtn" data-tag="development">Development</button>
-    <button class="fbtn" data-tag="office">Office</button>
-    <button class="fbtn" data-tag="land">Land</button>
-    <button class="fbtn" data-tag="retail">Retail</button>
-    <select id="date-filter">
-      <option value="all">All dates</option>
-      <option value="7">This week</option>
-      <option value="30">Last 30 days</option>
-      <option value="90">Last 90 days</option>
-    </select>
-    <button id="refresh-btn" onclick="refreshFeed()">⟳ Refresh Feed</button>
-    <span id="story-count">— stories</span>
-  </div>
 
-  <div id="main">
-    <div id="map"></div>
-    <div id="sidebar">
-      <div id="sidebar-tabs">
-        <button class="stab active" data-tab="stories">Feed</button>
-        <button class="stab" data-tab="news">📰 News</button>
-        <button class="stab" data-tab="add">+ Pin Story</button>
-      </div>
-
-      <div id="story-panel">
-        <div id="empty-msg" style="display:none">No stories match your current filters.<br><br>Use <strong>+ Pin Story</strong> to add new deals, or adjust the filters above.</div>
-      </div>
-
-      <div id="news-panel">
-        <div id="news-empty-msg">No news stories yet.<br><br>Hit <strong>⟳ Refresh Feed</strong> to check for TBJ stories that can't be mapped to a specific location.</div>
-      </div>
-
-      <div id="add-panel">
-        <label>Paste TBJ Article Text *</label>
-        <textarea id="in-text" placeholder="Copy the full article text from TBJ and paste it here. Claude will extract the headline, location, deal type, and key facts automatically.&#10;&#10;Then click Extract below."></textarea>
-        <button id="ai-btn" onclick="runExtract()">⚡ Extract &amp; Auto-Fill</button>
-        <div id="ai-status"></div>
-
-        <div class="divider"></div>
-
-        <label>Headline</label>
-        <input id="in-title" type="text" placeholder="Auto-filled from article"/>
-        <label>TBJ Article URL</label>
-        <input id="in-url" type="text" placeholder="Auto-filled — or paste manually"/>
-        <label>Location</label>
-        <select id="in-loc"></select>
-        <label>Category</label>
-        <select id="in-tag">
-          <option value="industrial">Industrial</option>
-          <option value="development">Development</option>
-          <option value="office">Office</option>
-          <option value="land">Land</option>
-          <option value="retail">Retail</option>
-        </select>
-        <label>Deal Notes</label>
-        <input id="in-notes" type="text" placeholder="Auto-filled — SF, price, tenants..."/>
-        <br/><br/>
-        <button id="add-btn" onclick="addStory()">Pin to Map</button>
-        <div id="add-msg"></div>
-      </div>
-
-      <div id="legend">
-        <div class="leg"><div class="leg-dot" style="background:#8B4513"></div>Industrial</div>
-        <div class="leg"><div class="leg-dot" style="background:#2E7D32"></div>Development</div>
-        <div class="leg"><div class="leg-dot" style="background:#1565C0"></div>Office</div>
-        <div class="leg"><div class="leg-dot" style="background:#6A1B9A"></div>Land</div>
-        <div class="leg"><div class="leg-dot" style="background:#AD1457"></div>Retail</div>
-        <div class="leg"><div class="leg-dot" style="background:#C9A84C"></div>Pinned</div>
-      </div>
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal-box">
+    <h2>Connect your API key</h2>
+    <p>This screener runs Claude AI locally in your browser. Your API key is never sent anywhere except directly to Anthropic. It's stored only in your browser's localStorage.</p>
+    <div class="field">
+      <label>Anthropic API key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" />
     </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveApiKey()">Connect &amp; launch</button>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:0;">
+      Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a> — you'll need a Claude API plan.
+    </p>
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- APP SHELL -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">CRE Screener</div>
+      <div class="logo-sub">Acquisition Agent v1.0</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Agents</div>
+      <div class="nav-item active" onclick="showPanel('screen')">
+        <div class="nav-dot"></div> Deal screener
+      </div>
+      <div class="nav-item" onclick="showPanel('history')">
+        <div class="nav-dot"></div> History
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Config</div>
+      <div class="nav-item" onclick="showPanel('buybox')">
+        <div class="nav-dot"></div> Buy box criteria
+      </div>
+      <div class="nav-item" onclick="showPanel('settings')">
+        <div class="nav-dot"></div> Settings
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="api-status">
+        <div class="api-dot" id="apiDot"></div>
+        <span id="apiStatusText">Not connected</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="phase-chip">Phase 1 Agent</span>
+        <span class="topbar-title" id="topbarTitle">Deal screener</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn" onclick="showPanel('buybox')">Edit buy box</button>
+        <button class="btn btn-primary" onclick="showPanel('screen')">+ New deal</button>
+      </div>
+    </div>
+
+    <!-- SCREEN PANEL -->
+    <div class="panel-wrap active" id="panel-screen">
+      <div class="section-head">
+        <h2>Screen a deal</h2>
+        <p>Enter deal details — the agent will check against your buy box, calculate key metrics, and issue a go / no-go with full rationale.</p>
+      </div>
+
+      <div id="form-area">
+        <!-- Asset Type -->
+        <div class="card">
+          <div class="card-label">Asset type</div>
+          <div class="toggle-group" id="assetType">
+            <button class="tog on" onclick="toggleAsset(this)">Industrial</button>
+            <button class="tog" onclick="toggleAsset(this)">Flex / industrial</button>
+            <button class="tog" onclick="toggleAsset(this)">IOS</button>
+            <button class="tog" onclick="toggleAsset(this)">Land</button>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="card">
+          <div class="card-label">Location</div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Address / parcel</label>
+              <input type="text" id="address" placeholder="2211 Grantham Dr, Durham NC" />
+            </div>
+            <div class="field">
+              <label>Market / corridor</label>
+              <select id="market">
+                <option>Triangle (Raleigh-Durham-Chapel Hill)</option>
+                <option>Sanford / Lee County</option>
+                <option>Wendell / Franklin County</option>
+                <option>Clayton / Johnston County</option>
+                <option>Smithfield</option>
+                <option>Youngsville / Wake Forest</option>
+                <option>Apex / Cary</option>
+                <option>Other NC secondary</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Zoning</label>
+            <input type="text" id="zoning" placeholder="IL, IH, B-3, R-80W..." />
+          </div>
+        </div>
+
+        <!-- Industrial Financials -->
+        <div class="card" id="ind-card">
+          <div class="card-label">Industrial financials</div>
+          <div class="grid-3">
+            <div class="field">
+              <label>Asking price</label>
+              <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="askPrice" placeholder="2500000" /></div>
+            </div>
+            <div class="field">
+              <label>Gross building SF</label>
+              <input type="number" id="buildingSF" placeholder="25000" />
+            </div>
+            <div class="field">
+              <label>Going-in NOI</label>
+              <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="noi" placeholder="175000" /></div>
+            </div>
+            <div class="field">
+              <label>Going-in cap rate</label>
+              <div class="prefix-wrap has-sfx"><input type="number" id="capRate" placeholder="7.0" step="0.1" /><span class="sfx">%</span></div>
+            </div>
+            <div class="field">
+              <label>Loan LTV</label>
+              <div class="prefix-wrap has-sfx"><input type="number" id="ltv" placeholder="65" step="1" /><span class="sfx">%</span></div>
+            </div>
+            <div class="field">
+              <label>Interest rate</label>
+              <div class="prefix-wrap has-sfx"><input type="number" id="intRate" placeholder="6.75" step="0.25" /><span class="sfx">%</span></div>
+            </div>
+            <div class="field">
+              <label>Amortization (yrs)</label>
+              <input type="number" id="loanTerm" placeholder="25" />
+            </div>
+            <div class="field">
+              <label>Clear height (ft)</label>
+              <input type="number" id="clearHeight" placeholder="24" />
+            </div>
+            <div class="field">
+              <label>Occupancy %</label>
+              <div class="prefix-wrap has-sfx"><input type="number" id="occupancy" placeholder="100" step="1" /><span class="sfx">%</span></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tenancy / lease summary</label>
+            <input type="text" id="tenancy" placeholder="Single tenant NNN, 3 yrs remaining; month-to-month; vacant..." />
+          </div>
+        </div>
+
+        <!-- Land Financials -->
+        <div class="card" id="land-card" style="display:none;">
+          <div class="card-label">Land financials</div>
+          <div class="grid-3">
+            <div class="field">
+              <label>Asking price</label>
+              <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="landAsk" placeholder="1500000" /></div>
+            </div>
+            <div class="field">
+              <label>Total acreage</label>
+              <input type="number" id="acreage" placeholder="10.0" step="0.1" />
+            </div>
+            <div class="field">
+              <label>Buildable SF (est.)</label>
+              <input type="number" id="buildableSF" placeholder="150000" />
+            </div>
+            <div class="field">
+              <label>Price / acre</label>
+              <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="pricePerAcre" placeholder="150000" /></div>
+            </div>
+            <div class="field">
+              <label>Price / buildable SF</label>
+              <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="pricePerBSF" placeholder="10.00" step="0.50" /></div>
+            </div>
+            <div class="field">
+              <label>Intended use</label>
+              <select id="landUse">
+                <option>Small bay flex development</option>
+                <option>IOS / truck / outdoor storage</option>
+                <option>Industrial BTS</option>
+                <option>Residential land</option>
+                <option>Mixed-use / commercial</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Entitlement status</label>
+            <input type="text" id="entitlement" placeholder="Raw, rezoning required; entitled; shovel-ready..." />
+          </div>
+        </div>
+
+        <!-- Dealbreaker Flags -->
+        <div class="card">
+          <div class="card-label">Dealbreaker flags — check all that apply</div>
+          <div class="check-grid">
+            <label class="check-row"><input type="checkbox" id="pfos" onchange="updateFlags()" /><span>PFOS / PFAS contamination confirmed or suspected</span></label>
+            <label class="check-row"><input type="checkbox" id="flood" onchange="updateFlags()" /><span>FEMA AE flood zone on any portion of parcel</span></label>
+            <label class="check-row"><input type="checkbox" id="phase2" onchange="updateFlags()" /><span>Phase II ESA triggered or in progress</span></label>
+            <label class="check-row"><input type="checkbox" id="titleCloud" onchange="updateFlags()" /><span>Title encumbrance / cloud on title</span></label>
+            <label class="check-row"><input type="checkbox" id="ncdot" onchange="updateFlags()" /><span>NCDOT ROW acquisition risk identified</span></label>
+            <label class="check-row"><input type="checkbox" id="jordanLake" onchange="updateFlags()" /><span>Jordan Lake watershed restriction (development limit)</span></label>
+          </div>
+          <div class="alert alert-danger" id="flagAlert" style="display:none;">
+            <span class="alert-flag">⚑ HARD PASS</span>
+            <span>One or more dealbreaker flags are active. Agent will issue No-Go regardless of financial metrics.</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card">
+          <div class="card-label">Additional context</div>
+          <div class="field">
+            <textarea id="notes" placeholder="Off-market intel, broker notes, condition issues, comparable context, seller motivation, competitive dynamics, anything else relevant to the deal..."></textarea>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button class="submit-btn" id="screenBtn" onclick="runScreener()">Run deal screener →</button>
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div id="loading-area" style="display:none;">
+        <div class="card">
+          <div class="card-label">Agent log</div>
+          <div class="log-box" id="logBox"></div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="result-area" style="display:none;">
+        <div id="verdictBanner" class="verdict-banner"></div>
+        <div class="score-row" id="scoreRow"></div>
+        <div class="result-body">
+          <h3>Agent analysis</h3>
+          <div class="result-prose" id="resultProse"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn" onclick="resetScreen()">Screen another deal</button>
+          <button class="btn" onclick="showPanel('history')">View history</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="panel-wrap" id="panel-history">
+      <div class="section-head">
+        <h2>Screen history</h2>
+        <p>All deals screened this session. Refresh clears history.</p>
+      </div>
+      <div id="historyList"><div class="empty-state"><span>○</span>No deals screened yet.</div></div>
+    </div>
+
+    <!-- BUY BOX PANEL -->
+    <div class="panel-wrap" id="panel-buybox">
+      <div class="section-head">
+        <h2>Buy box criteria</h2>
+        <p>Customize the thresholds the agent uses to evaluate every deal. Changes save automatically to your browser.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Industrial / flex thresholds</div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Minimum going-in cap rate</div>
+            <div class="criteria-desc">Going-in NOI ÷ purchase price. Hard floor — any deal below this fails.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-capMin" step="0.1" value="7.0" /></div>
+          <div class="criteria-unit">%</div>
+        </div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Minimum DSCR</div>
+            <div class="criteria-desc">Debt service coverage ratio at stabilized NOI. Below 1.20x = lender rejection risk.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-dscrMin" step="0.05" value="1.20" /></div>
+          <div class="criteria-unit">×</div>
+        </div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Maximum LTV</div>
+            <div class="criteria-desc">Loan-to-value ceiling at acquisition. Above this = overleveraged.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-ltvMax" step="1" value="65" /></div>
+          <div class="criteria-unit">%</div>
+        </div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Minimum clear height</div>
+            <div class="criteria-desc">Functional industrial minimum. Below 18' limits tenant pool significantly.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-clearMin" step="1" value="18" /></div>
+          <div class="criteria-unit">ft</div>
+        </div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Minimum lease term remaining</div>
+            <div class="criteria-desc">Months of lease remaining on acquisition. Below this = lease-up risk.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-leaseMin" step="1" value="12" /></div>
+          <div class="criteria-unit">mo</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Land thresholds</div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Maximum price / buildable SF</div>
+            <div class="criteria-desc">All-in land cost per buildable square foot. Above $3.00 destroys development economics in most Triangle submarkets.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-landPSFMax" step="0.25" value="3.00" /></div>
+          <div class="criteria-unit">$/SF</div>
+        </div>
+        <div class="criteria-row">
+          <div class="criteria-info">
+            <div class="criteria-name">Maximum price / acre (corridor)</div>
+            <div class="criteria-desc">Sanity check on raw price/acre for secondary market land. Adjust for Triangle vs. secondary market context.</div>
+          </div>
+          <div class="criteria-input"><input type="number" id="bb-landAcreMax" step="5000" value="250000" /></div>
+          <div class="criteria-unit">$/ac</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Target markets</div>
+        <div class="field" style="margin-bottom:0;">
+          <label style="margin-bottom:8px;display:block;">Acceptable markets (agent will flag out-of-market deals)</label>
+          <div class="toggle-group" id="bbMarkets">
+            <button class="tog on" onclick="this.classList.toggle('on')">Triangle</button>
+            <button class="tog on" onclick="this.classList.toggle('on')">Sanford</button>
+            <button class="tog on" onclick="this.classList.toggle('on')">Wendell</button>
+            <button class="tog on" onclick="this.classList.toggle('on')">Clayton</button>
+            <button class="tog on" onclick="this.classList.toggle('on')">Smithfield</button>
+            <button class="tog on" onclick="this.classList.toggle('on')">Youngsville</button>
+            <button class="tog on" onclick="this.classList.toggle('on')">Apex / Cary</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Hard pass conditions</div>
+        <div class="check-grid" id="bbFlags">
+          <label class="check-row"><input type="checkbox" id="bbf-pfos" checked /><span>PFOS / PFAS — always no-go</span></label>
+          <label class="check-row"><input type="checkbox" id="bbf-flood" checked /><span>AE flood zone — always no-go</span></label>
+          <label class="check-row"><input type="checkbox" id="bbf-phase2" checked /><span>Phase II triggered — hold pending results</span></label>
+          <label class="check-row"><input type="checkbox" id="bbf-title" checked /><span>Title cloud — hold pending resolution</span></label>
+          <label class="check-row"><input type="checkbox" id="bbf-ncdot" /><span>NCDOT ROW risk — flag but allow conditional</span></label>
+          <label class="check-row"><input type="checkbox" id="bbf-jordan" /><span>Jordan Lake watershed — flag but allow conditional</span></label>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+        <button class="btn btn-primary" onclick="saveBuyBox()">Save buy box</button>
+        <span class="saved-badge" id="savedBadge">✓ Saved</span>
+        <button class="btn" onclick="resetBuyBox()" style="margin-left:auto;">Reset to defaults</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="panel-wrap" id="panel-settings">
+      <div class="section-head">
+        <h2>Settings</h2>
+        <p>API configuration and agent behavior.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Anthropic API key</div>
+        <div class="field">
+          <label>API key (stored locally in browser only)</label>
+          <input type="password" id="apiKeyDisplay" placeholder="sk-ant-..." />
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-primary" onclick="updateApiKey()">Update key</button>
+          <button class="btn" onclick="clearApiKey()">Clear key</button>
+          <span class="saved-badge" id="keySavedBadge">✓ Saved</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Firm / team branding</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Firm name</label>
+            <input type="text" id="firmName" placeholder="South Atlantic Sites" />
+          </div>
+          <div class="field">
+            <label>Focus markets (shown in analysis)</label>
+            <input type="text" id="firmMarkets" placeholder="Triangle NC, Sanford, Wendell..." />
+          </div>
+        </div>
+        <div class="field">
+          <label>Additional agent context (injected into every screen)</label>
+          <textarea id="firmContext" placeholder="e.g. We focus on IOS and small bay flex. Our typical hold is 5-7 years. We avoid ground leases and master-planned parks..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveFirmSettings()">Save</button>
+      </div>
+      <div class="card">
+        <div class="card-label">About</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;">
+          CRE Deal Screener — Phase 1 of a multi-agent acquisition orchestrator.<br>
+          Inspired by Avi Hacker's CRE Acquisition Orchestrator framework (github.com/ahacker-1/cre-acquisition-orchestrator).<br>
+          Built for industrial &amp; land brokerage. Apache 2.0 licensed.
+        </p>
+        <p style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--font);">v1.0 — Phase 1 Agent</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
 <script>
-// ── Config ────────────────────────────────────────────────────
-const LS_KEY = 'sas_tbj_map_v2';
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let apiKey = localStorage.getItem('cre_api_key') || '';
+let history = [];
+let currentAsset = 'Industrial';
 
-// Multiple Nitter instances as fallbacks (public Twitter mirrors)
-const NITTER_INSTANCES = [
-  'https://nitter.privacydev.net',
-  'https://nitter.poast.org',
-  'https://nitter.1d4.us',
-];
-const TBJ_HANDLE = 'TriangleBIZJrnl';
-const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+// Load persisted settings
+function loadSettings() {
+  const bb = JSON.parse(localStorage.getItem('cre_buybox') || '{}');
+  if (bb.capMin) document.getElementById('bb-capMin').value = bb.capMin;
+  if (bb.dscrMin) document.getElementById('bb-dscrMin').value = bb.dscrMin;
+  if (bb.ltvMax) document.getElementById('bb-ltvMax').value = bb.ltvMax;
+  if (bb.clearMin) document.getElementById('bb-clearMin').value = bb.clearMin;
+  if (bb.leaseMin) document.getElementById('bb-leaseMin').value = bb.leaseMin;
+  if (bb.landPSFMax) document.getElementById('bb-landPSFMax').value = bb.landPSFMax;
+  if (bb.landAcreMax) document.getElementById('bb-landAcreMax').value = bb.landAcreMax;
 
-const COLORS = {
-  industrial:'#8B4513', development:'#2E7D32', office:'#1565C0',
-  retail:'#AD1457', land:'#6A1B9A', manual:'#C9A84C'
-};
-const TAG_CSS = {
-  industrial:'background:var(--ti-bg);color:var(--ti-fg)',
-  development:'background:var(--td-bg);color:var(--td-fg)',
-  office:'background:var(--to-bg);color:var(--to-fg)',
-  retail:'background:var(--tr-bg);color:var(--tr-fg)',
-  land:'background:var(--tl-bg);color:var(--tl-fg)',
-  manual:'background:var(--tm-bg);color:var(--tm-fg)',
-};
+  const firm = JSON.parse(localStorage.getItem('cre_firm') || '{}');
+  if (firm.name) document.getElementById('firmName').value = firm.name;
+  if (firm.markets) document.getElementById('firmMarkets').value = firm.markets;
+  if (firm.context) document.getElementById('firmContext').value = firm.context;
 
-const PLACES = [
-  {name:'Raleigh',lat:35.7796,lng:-78.6382},{name:'Durham',lat:35.9940,lng:-78.8986},
-  {name:'Chapel Hill',lat:35.9132,lng:-79.0558},{name:'Cary',lat:35.7915,lng:-78.7811},
-  {name:'Apex',lat:35.7326,lng:-78.8503},{name:'Morrisville',lat:35.8237,lng:-78.8253},
-  {name:'Wake Forest',lat:35.9799,lng:-78.5097},{name:'Garner',lat:35.7079,lng:-78.6137},
-  {name:'Fuquay-Varina',lat:35.5843,lng:-78.8003},{name:'Holly Springs',lat:35.6512,lng:-78.8340},
-  {name:'Pittsboro',lat:35.7243,lng:-79.1770},{name:'Sanford',lat:35.4799,lng:-79.1803},
-  {name:'RTP',lat:35.8998,lng:-78.8669},{name:'Hillsborough',lat:36.0748,lng:-79.0995},
-  {name:'Clayton',lat:35.6504,lng:-78.4567},{name:'Knightdale',lat:35.7876,lng:-78.4894},
-  {name:'Wendell',lat:35.7873,lng:-78.3694},{name:'Youngsville',lat:36.0254,lng:-78.4811},
-  {name:'Chatham County',lat:35.7048,lng:-79.2441},{name:'Benson',lat:35.3732,lng:-78.5459},
-  {name:'Johnston County',lat:35.5951,lng:-78.3674},{name:'Zebulon',lat:35.8226,lng:-78.3119},
-  {name:'North Hills',lat:35.8363,lng:-78.6468},{name:'Glenwood Ave',lat:35.8121,lng:-78.6618},
-  {name:'Downtown Raleigh',lat:35.7796,lng:-78.6382},{name:'Downtown Durham',lat:35.9963,lng:-78.9018},
-  {name:'Eastern Wake',lat:35.7612,lng:-78.3950},{name:'North Raleigh',lat:35.8700,lng:-78.6200},
-  {name:'RDU',lat:35.8801,lng:-78.7880},{name:'Wake County',lat:35.7923,lng:-78.6444},
-  {name:'Research Triangle',lat:35.8998,lng:-78.8669},{name:'Person County',lat:36.3918,lng:-78.9701},
-  {name:'New Hill',lat:35.6574,lng:-78.9735},{name:'South Durham',lat:35.9200,lng:-78.9500},
-];
-
-const SEED = [
-  {title:"Vulcan Elements signs 501,215 SF lease at Cross Point Logistics Center — largest U.S. manufacturing lease of 2025",loc:'Benson',notes:"501,215 SF · Cross Point Logistics Center · Largest U.S. industrial lease of 2025",tag:'industrial',date:'2025-11-01',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Fujifilm expands with $1.2B industrial facility in Holly Springs",loc:'Holly Springs',notes:"$1.2B · Life science manufacturing expansion",tag:'industrial',date:'2025-09-15',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Amgen commits $1.02B to new manufacturing facility in Holly Springs",loc:'Holly Springs',notes:"$1.02B · New life science manufacturing campus",tag:'industrial',date:'2025-08-20',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Kuehne + Nagel pre-leases major distribution facility in RTP / I-40 corridor",loc:'RTP',notes:"Pre-leased distribution · Part of 778,000 SF delivered in RTP/I-40 and Eastern Wake",tag:'industrial',date:'2025-10-01',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Johnson Brothers pre-leases second major facility in Eastern Wake — 778k SF total delivered with Kuehne+Nagel",loc:'Eastern Wake',notes:"Pre-leased warehouse · Eastern Wake submarket surge",tag:'industrial',date:'2025-10-15',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Johnston County industrial: New Class A product delivers on I-40 / Hwy 42 corridor",loc:'Johnston County',notes:"New warehouse deliveries · Sub-5% vacancy · Southern Wake/Johnston demand corridor",tag:'industrial',date:'2026-01-05',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Corning vacates Eastern NC distribution center — Ryder System takes over occupancy",loc:'Eastern Wake',notes:"Tenant turnover · Corning out, Ryder in · Eastern NC distribution center",tag:'industrial',date:'2026-03-02',link:'https://www.bisnow.com/raleigh-durham',source:'seed'},
-  {title:"37-story residential tower — tallest in Raleigh — rising on Glenwood Avenue",loc:'Glenwood Ave',notes:"37-story tower · Tallest residential building in Raleigh history",tag:'development',date:'2026-02-10',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Beacon Partners acquires 119 acres in Durham for large-scale mixed-use development",loc:'Durham',notes:"119 acres · Mixed-use development · Beacon Partners",tag:'development',date:'2026-02-17',link:'https://www.bisnow.com/raleigh-durham',source:'seed'},
-  {title:"Microsoft announces mega data center campus in Person County near Virginia border",loc:'Person County',notes:"Mega campus · Person County · Near Virginia border · Major hyperscaler investment in NC",tag:'development',date:'2026-02-25',link:'https://www.bisnow.com/raleigh-durham/news/data-center',source:'seed'},
-  {title:"New Hill Digital Campus data center scrapped — Natelli Investments withdraws 189-acre Apex annexation and rezoning",loc:'New Hill',notes:"189 acres · New Hill community · 250 MW campus near Shearon Harris Nuclear Plant · Withdrawn by Natelli Investments",tag:'development',date:'2026-03-10',link:'https://www.bisnow.com/raleigh-durham/news/data-center/massive-raleigh-area-data-center-scrapped-133584',source:'seed'},
-  {title:"Apex enacts data center development moratorium ahead of March 10 town meeting",loc:'Apex',notes:"Data center moratorium · Apex town council · Proactive zoning regulation response",tag:'development',date:'2026-03-07',link:'https://abc11.com/post/data-center-developer-pulls-back-apex-now/18685708/',source:'seed'},
-  {title:"Upscale hotel competition heating up in Cary / Umstead corridor",loc:'Cary',notes:"New luxury hotel development · Cary/Umstead market",tag:'development',date:'2026-01-10',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Kane Realty outlines major 2026 pipeline — North Hills and Downtown Raleigh focus",loc:'North Hills',notes:"Kane Realty · Mixed-use pipeline · North Hills and Downtown Raleigh",tag:'development',date:'2026-02-02',link:'https://www.axios.com/local/raleigh/development',source:'seed'},
-  {title:"Regional law firm takes full floor at Imperial Center (formerly IQVIA building) in RTP",loc:'RTP',notes:"Full floor office lease · Imperial Tower under renovation · RTP submarket",tag:'office',date:'2026-02-15',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Aspida signs 90,000 SF lease at Imperial Tower in RTP",loc:'RTP',notes:"90,000 SF · Aspida · Imperial Tower (formerly IQVIA) · Long-term commitment",tag:'office',date:'2025-11-01',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-office/',source:'seed'},
-  {title:"Victra leases 43,000 SF at Imperial Tower RTP",loc:'RTP',notes:"43,000 SF · Victra · Imperial Tower · Repositioning success story",tag:'office',date:'2025-10-15',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-office/',source:'seed'},
-  {title:"North Hills and Raleigh Iron Works lead Triangle office absorption — spec suite strategy driving lease-ups",loc:'North Hills',notes:"Class A office · Spec suites strategy · North Hills and Raleigh Iron Works outperforming",tag:'office',date:'2025-12-01',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-office/',source:'seed'},
-  {title:"One North Hills Tower closes out — North Hills submarket achieves full lease-up",loc:'North Hills',notes:"One North Hills Tower · Full lease-up · Walkability and amenities driving demand",tag:'office',date:'2025-09-01',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-office/',source:'seed'},
-  {title:"Town Lane's ShopOne platform acquires two shopping centers in Raleigh-Durham region",loc:'Raleigh',notes:"ShopOne · Two retail center acquisitions · Raleigh-Durham region",tag:'retail',date:'2026-02-23',link:'https://www.bisnow.com/raleigh-durham',source:'seed'},
-  {title:"Bob's Discount Furniture signs two leases totaling 76,854 SF in Triangle market",loc:'Cary',notes:"76,854 SF total · Bob's Discount Furniture · Two locations in Triangle",tag:'retail',date:'2025-10-01',link:'https://www.crexi.com/blog/raleigh-commercial-real-estate-market',source:'seed'},
-  {title:"US-1 South corridor toward Sanford emerging as new flex/industrial land play for developers",loc:'Sanford',notes:"US-1 South corridor · Sanford submarket · New flex industrial development opportunities",tag:'land',date:'2026-01-20',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-land/',source:'seed'},
-  {title:"Infill assemblage and redevelopment opportunities surfacing as greenfield deals stall",loc:'Durham',notes:"Infill assemblage · Redevelopment plays · Triangle market reset creating land opportunity",tag:'land',date:'2026-02-01',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-land/',source:'seed'},
-  {title:"Avison Young brokers sale of five-building office park in Raleigh for $16M",loc:'Raleigh',notes:"$16M · Five-building office park · Avison Young · Raleigh",tag:'office',date:'2025-11-01',link:'https://www.avisonyoung.us/web/raleigh-durham',source:'seed'},
-  {title:"CBRE brokers sale of EmergeOrtho Southpoint medical outpatient building — 35,171 SF in Durham",loc:'Durham',notes:"35,171 SF · EmergeOrtho Southpoint · Medical MOB/ASC · 7810 NC Hwy 751 · Sold to BGO",tag:'office',date:'2025-10-01',link:'https://www.cbre.com/offices/corporate/raleigh',source:'seed'},
-  {title:"Glenwood South restaurant launches new offerings — new F&B tenant activates corridor",loc:'Glenwood Ave',notes:"Glenwood South · New restaurant tenant · F&B retail activation along Glenwood Ave",tag:'retail',date:'2026-03-13',link:'https://www.bizjournals.com/triangle/news/2026/03/13/raleigh-restaurant-roundup-vidrio-brunch-menu.html',source:'seed'},
-  {title:"Cary building with big-name tenant sold for $58M — Vigilant Holdings acquires Press Building",loc:'Cary',notes:"$58M · Press Building · Big-name anchor tenant · Vigilant Holdings acquires",tag:'office',date:'2026-03-13',link:'https://www.bizjournals.com/triangle/news/2026/03/13/cary-press-building-sold-vigilant-holdings.html',source:'seed'},
-  {title:"North Hills tower to have 20th-floor rooftop pool, 357 apartments — Kane Realty development",loc:'North Hills',notes:"357 apartments · 20th-floor rooftop pool · Kane Realty · North Hills mixed-use tower",tag:'development',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/raleigh-north-hills-tower-kane-realty-development.html',source:'seed'},
-  {title:"Former Amazon hub in Durham sold for $26M despite no tenants — Atlanta Property Group acquires vacant industrial site",loc:'Durham',notes:"$26M · Vacant · Former Amazon · Atlanta Property Group · Speculative industrial acquisition",tag:'industrial',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/atlanta-property-group-buys-durham-industrial-site.html',source:'seed'},
-  {title:"Eastcut Sandwich Bar signs lease at Waverly Place — third Triangle location heads to Cary",loc:'Cary',notes:"Eastcut Sandwich Bar · Third location · Waverly Place retail center · Cary",tag:'retail',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/eastcut-sandwich-bar-cary-waverly-place-lease.html',source:'seed'},
-  {title:"Beta Technologies hiring in Morrisville for next-gen electric aircraft program",loc:'Morrisville',notes:"Beta Technologies · Electric aircraft · Hiring campaign · Morrisville / RDU corridor",tag:'industrial',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/beta-technologies-hiring-morrisville-aircraft.html',source:'seed'},
-  {title:"RDU Airport weighs raising parking rates as capital project budget grows",loc:'RDU',notes:"RDU · Parking rate increase · Capital projects budget · Airport authority study",tag:'development',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/rdu-airport-parking-rates-budget-capital-projects.html',source:'seed'},
-  {title:"$50M industrial park project could boost Rocky Mount's economic prospects",loc:'Johnston County',notes:"$50M · Ruddell Group · Rocky Mount industrial park · Eastern NC economic development",tag:'industrial',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/ruddell-group-rocky-mount-industrial-park-building.html',source:'seed'},
-  {title:"NC State research aims for $1B enterprise — new leader targets defense partnerships and DOD funding",loc:'Raleigh',notes:"NC State · $1B research enterprise · Defense partnerships · DOD funding",tag:'development',date:'2026-03-12',link:'https://www.bizjournals.com/triangle/news/2026/03/12/ncstate-research-funding-defense-partnerships-dod.html',source:'seed'}
-];
-
-const SEED_NEWS = [
-  {title:"Duke Energy struggling to keep up with power demand surge tied to industrial and data center growth",loc:'Johnston County',notes:"Power demand surge · Duke Energy capacity constraints in Johnston County",tag:'industrial',date:'2026-02-20',link:'https://www.bizjournals.com/triangle/news/commercial-real-estate',source:'seed'},
-  {title:"Triangle small-bay flex vacancy holds near 5% — tightest segment in entire industrial market",loc:'Raleigh',notes:"Small-bay industrial vacancy ~5% · East Wake and SW Wake leading · Triangle 55 and Knightdale Gateway key assets",tag:'industrial',date:'2025-12-15',link:'https://www.triprop.com/2025-triangle-market-overview-and-2025-forecast-flex-2/',source:'seed'},
-  {title:"Southeast Wake County industrial vacancy hits 3% — Merritt Properties, Wigeon Capital, and Greenberg Gibbons leading new flex construction",loc:'Eastern Wake',notes:"3% vacancy · Southeast Wake · New flex construction underway",tag:'industrial',date:'2025-11-15',link:'https://www.triprop.com/2025-triangle-market-overview-and-2025-forecast-flex-2/',source:'seed'},
-  {title:"Southern Wake I-540 interchange emerging as top industrial submarket for 2026 absorption",loc:'Fuquay-Varina',notes:"I-540 corridor · Southern Wake County · Key 2026 industrial growth node",tag:'industrial',date:'2026-01-20',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-warehouse/',source:'seed'},
-  {title:"Triangle industrial construction pipeline hits record 4.3M SF — largest in regional history entering 2026",loc:'Raleigh',notes:"4.3M SF pipeline · 1.5M SF delivering year-end 2025 · Largest industrial pipeline in Triangle history",tag:'development',date:'2025-12-01',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-warehouse/',source:'seed'},
-  {title:"Land deals returning to market across Triangle — pre-2022 contract closings hit concession pressure",loc:'Raleigh',notes:"2025-2026 land market reset · Pre-2022 deals closing with concessions · Sites sitting longer with fewer offers",tag:'land',date:'2026-01-15',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-land/',source:'seed'},
-  {title:"Triangle industrial investment sales clearing above $200/SF — several Class A trades set regional records",loc:'Raleigh',notes:"Class A industrial · $200+/SF · Record pricing in Southern Wake, Eastern Wake, Johnston County",tag:'industrial',date:'2025-12-15',link:'https://www.triprop.com/2025-triangle-market-overview-and-2026-forecast-investment-sales/',source:'seed'},
-  {title:"Dundon remains 'bullish' on bringing MLB to Raleigh — committed despite NHL/NBA moves",notes:"Tom Dundon · MLB expansion · Canes CEO sees variety of land options for stadium site in Raleigh",tag:'development',date:'2026-03-13',link:'https://www.bizjournals.com/triangle/news/2026/03/11/mlb-raleigh-baseball-dundon-portland-trail-blazers.html'}
-];
-
-// ── State ──────────────────────────────────────────────────────
-let map, allStories=[], activeMarkers=[], activeFilter='all', activeDays='all';
-
-// ── Utils ──────────────────────────────────────────────────────
-function jitter(v){return v+(Math.random()-0.5)*0.014;}
-function fmtDate(ds){try{return new Date(ds).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}catch(e){return ds||'';}}
-function dateMs(ds){try{if(!ds)return 0;const p=ds.split('-').map(Number);return new Date(p[0],p[1]-1,p[2],12,0,0).getTime();}catch(e){return 0;}}
-function findPlace(loc){
-  if(!loc)return null;
-  return PLACES.find(p=>p.name.toLowerCase()===loc.toLowerCase())||
-         PLACES.find(p=>loc.toLowerCase().includes(p.name.toLowerCase()))||
-         PLACES.find(p=>p.name.toLowerCase().includes(loc.toLowerCase()));
-}
-function makeIcon(tag,isManual){
-  const c=isManual?COLORS.manual:(COLORS[tag]||'#555');
-  const s=isManual?14:11;
-  return L.divIcon({className:'',
-    html:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:${c};border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,0.4)"></div>`,
-    iconSize:[s,s],iconAnchor:[s/2,s/2],popupAnchor:[0,-10]});
-}
-
-// ── localStorage ───────────────────────────────────────────────
-function loadPins(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return[];}}
-function savePins(pins){try{localStorage.setItem(LS_KEY,JSON.stringify(pins));}catch(e){}}
-
-// ── Twitter/X via Nitter ───────────────────────────────────────
-const CRE_KW = ['real estate','lease','leasing','industrial','warehouse','logistics','development',
-  'construction','rezoning','permit','office','retail','land','acres','sqft','square feet',
-  'multifamily','apartment','manufacturing','data center','flex space','groundbreaking',
-  'mixed-use','building','commercial','cre'];
-
-function isCRE(text){
-  const t=(text||'').toLowerCase();
-  return CRE_KW.some(k=>t.includes(k));
-}
-function detectTag(text){
-  const t=text.toLowerCase();
-  if(/industrial|logistics|distribution|manufacturing|warehouse|fulfillment|data.center/.test(t))return'industrial';
-  if(/development|developer|construction|rezoning|permit|groundbreaking|mixed.use/.test(t))return'development';
-  if(/retail|restaurant|brewery|hotel|hospitality/.test(t))return'retail';
-  if(/\bland\b|acres|parcel|site|zoning/.test(t))return'land';
-  return'office';
-}
-function detectLoc(text){
-  for(const p of PLACES){
-    const re=new RegExp('\\b'+p.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
-    if(re.test(text))return p.name;
+  if (apiKey) {
+    document.getElementById('apiKeyDisplay').value = apiKey;
+    setApiStatus(true);
   }
-  return null;
-}
-function extractTBJLink(text){
-  // Nitter expands t.co links — look for bizjournals URL
-  const m=text.match(/https?:\/\/(?:www\.)?bizjournals\.com\/triangle\/[^\s"<>]+/);
-  if(m)return m[0];
-  // fallback: any t.co or bit.ly link
-  const m2=text.match(/https?:\/\/(?:t\.co|bit\.ly)\/[^\s"<>]+/);
-  return m2?m2[0]:'https://www.bizjournals.com/triangle/news/commercial-real-estate';
 }
 
-async function fetchNitterFeed(instance){
-  const url=`${instance}/${TBJ_HANDLE}/rss`;
-  const proxyUrl=CORS_PROXY+encodeURIComponent(url);
-  const resp=await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
-  const data=await resp.json();
-  const xml=new DOMParser().parseFromString(data.contents||'','text/xml');
-  const items=xml.querySelectorAll('item');
-  if(!items.length)throw new Error('No items');
-  return Array.from(items).map(item=>{
-    const title=(item.querySelector('title')?.textContent||'').trim();
-    const desc=(item.querySelector('description')?.textContent||'').replace(/<[^>]+>/g,'').trim();
-    const pubDate=(item.querySelector('pubDate')?.textContent||'').trim();
-    const fullText=title+' '+desc;
-    let dateIso='';
-    try{dateIso=new Date(pubDate).toISOString();}catch(e){}
-    return{title,desc,fullText,dateIso,link:extractTBJLink(fullText)};
-  });
+function getBuyBox() {
+  return {
+    capMin: parseFloat(document.getElementById('bb-capMin').value) || 7.0,
+    dscrMin: parseFloat(document.getElementById('bb-dscrMin').value) || 1.20,
+    ltvMax: parseFloat(document.getElementById('bb-ltvMax').value) || 65,
+    clearMin: parseFloat(document.getElementById('bb-clearMin').value) || 18,
+    leaseMin: parseFloat(document.getElementById('bb-leaseMin').value) || 12,
+    landPSFMax: parseFloat(document.getElementById('bb-landPSFMax').value) || 3.0,
+    landAcreMax: parseFloat(document.getElementById('bb-landAcreMax').value) || 250000,
+  };
 }
 
-async function refreshFeed(){
-  const btn=document.getElementById('refresh-btn');
-  const countEl=document.getElementById('story-count');
-  btn.disabled=true;
-  btn.textContent='Checking Gmail...';
+function saveBuyBox() {
+  localStorage.setItem('cre_buybox', JSON.stringify(getBuyBox()));
+  const badge = document.getElementById('savedBadge');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2000);
+}
+
+function resetBuyBox() {
+  localStorage.removeItem('cre_buybox');
+  document.getElementById('bb-capMin').value = '7.0';
+  document.getElementById('bb-dscrMin').value = '1.20';
+  document.getElementById('bb-ltvMax').value = '65';
+  document.getElementById('bb-clearMin').value = '18';
+  document.getElementById('bb-leaseMin').value = '12';
+  document.getElementById('bb-landPSFMax').value = '3.00';
+  document.getElementById('bb-landAcreMax').value = '250000';
+}
+
+function saveFirmSettings() {
+  localStorage.setItem('cre_firm', JSON.stringify({
+    name: document.getElementById('firmName').value,
+    markets: document.getElementById('firmMarkets').value,
+    context: document.getElementById('firmContext').value,
+  }));
+  alert('Firm settings saved.');
+}
+
+// ─── API KEY ──────────────────────────────────────────────────────────────────
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-ant-') && !val.startsWith('sk-')) {
+    alert('That doesn\'t look like a valid Anthropic API key. It should start with sk-ant-');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('cre_api_key', apiKey);
+  setApiStatus(true);
+  document.getElementById('apiModal').style.display = 'none';
+  document.getElementById('apiKeyDisplay').value = apiKey;
+}
+
+function updateApiKey() {
+  const val = document.getElementById('apiKeyDisplay').value.trim();
+  if (!val) return;
+  apiKey = val;
+  localStorage.setItem('cre_api_key', apiKey);
+  setApiStatus(true);
+  const badge = document.getElementById('keySavedBadge');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2000);
+}
+
+function clearApiKey() {
+  apiKey = '';
+  localStorage.removeItem('cre_api_key');
+  document.getElementById('apiKeyDisplay').value = '';
+  setApiStatus(false);
+}
+
+function setApiStatus(connected) {
+  document.getElementById('apiDot').className = 'api-dot' + (connected ? ' connected' : '');
+  document.getElementById('apiStatusText').textContent = connected ? 'API connected' : 'Not connected';
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+const titles = { screen: 'Deal screener', history: 'History', buybox: 'Buy box criteria', settings: 'Settings' };
+
+function showPanel(id) {
+  document.querySelectorAll('.panel-wrap').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const items = document.querySelectorAll('.nav-item');
+  const map = ['screen', 'history', 'buybox', 'settings'];
+  map.forEach((m, i) => { if (m === id && items[i]) items[i].classList.add('active'); });
+  document.getElementById('topbarTitle').textContent = titles[id] || id;
+}
+
+// ─── ASSET TYPE TOGGLE ────────────────────────────────────────────────────────
+function toggleAsset(btn) {
+  document.querySelectorAll('#assetType .tog').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentAsset = btn.textContent.trim();
+  const isLand = currentAsset === 'Land' || currentAsset === 'IOS';
+  document.getElementById('ind-card').style.display = isLand ? 'none' : '';
+  document.getElementById('land-card').style.display = isLand ? '' : 'none';
+}
+
+// ─── FLAGS ────────────────────────────────────────────────────────────────────
+function updateFlags() {
+  const ids = ['pfos','flood','phase2','titleCloud','ncdot','jordanLake'];
+  const any = ids.some(id => document.getElementById(id).checked);
+  document.getElementById('flagAlert').style.display = any ? 'flex' : 'none';
+}
+
+// ─── COMPUTED METRICS ─────────────────────────────────────────────────────────
+function computeMetrics() {
+  const bb = getBuyBox();
+  const isLand = currentAsset === 'Land' || currentAsset === 'IOS';
+
+  if (isLand) {
+    const ask = parseFloat(document.getElementById('landAsk').value) || 0;
+    const acres = parseFloat(document.getElementById('acreage').value) || 0;
+    const bsf = parseFloat(document.getElementById('buildableSF').value) || 0;
+    let pBSF = parseFloat(document.getElementById('pricePerBSF').value) || 0;
+    let pAcre = parseFloat(document.getElementById('pricePerAcre').value) || 0;
+    if (!pBSF && ask && bsf) pBSF = ask / bsf;
+    if (!pAcre && ask && acres) pAcre = ask / acres;
+    return {
+      isLand: true,
+      pBSF, pAcre,
+      bsfPass: pBSF > 0 ? pBSF <= bb.landPSFMax : null,
+      acrePass: pAcre > 0 ? pAcre <= bb.landAcreMax : null,
+    };
+  }
+
+  const ask = parseFloat(document.getElementById('askPrice').value) || 0;
+  const noi = parseFloat(document.getElementById('noi').value) || 0;
+  const capInput = parseFloat(document.getElementById('capRate').value) || 0;
+  const ltv = parseFloat(document.getElementById('ltv').value) || 65;
+  const intRate = parseFloat(document.getElementById('intRate').value) || 6.75;
+  const term = parseFloat(document.getElementById('loanTerm').value) || 25;
+  const clearHeight = parseFloat(document.getElementById('clearHeight').value) || 0;
+
+  const cap = capInput || (ask && noi ? (noi / ask) * 100 : 0);
+  let dscr = null;
+  if (ask && noi && ltv && intRate && term) {
+    const loan = ask * (ltv / 100);
+    const r = (intRate / 100) / 12;
+    const n = term * 12;
+    const pmt = loan * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    dscr = noi / (pmt * 12);
+  }
+
+  return {
+    isLand: false,
+    cap, dscr, ltv, clearHeight,
+    capPass: cap > 0 ? cap >= bb.capMin : null,
+    dscrPass: dscr !== null ? dscr >= bb.dscrMin : null,
+    ltvPass: ltv > 0 ? ltv <= bb.ltvMax : null,
+    clearPass: clearHeight > 0 ? clearHeight >= bb.clearMin : null,
+  };
+}
+
+// ─── SCREENER ─────────────────────────────────────────────────────────────────
+async function runScreener() {
+  if (!apiKey) {
+    document.getElementById('apiModal').style.display = 'flex';
+    return;
+  }
+
+  const bb = getBuyBox();
+  const metrics = computeMetrics();
+  const flags = {
+    pfos: document.getElementById('pfos').checked,
+    flood: document.getElementById('flood').checked,
+    phase2: document.getElementById('phase2').checked,
+    titleCloud: document.getElementById('titleCloud').checked,
+    ncdot: document.getElementById('ncdot').checked,
+    jordanLake: document.getElementById('jordanLake').checked,
+  };
+
+  const firmData = JSON.parse(localStorage.getItem('cre_firm') || '{}');
+  const firmName = firmData.name || 'the firm';
+  const firmContext = firmData.context || '';
+
+  const address = document.getElementById('address').value || 'Address not provided';
+  const market = document.getElementById('market').value;
+  const zoning = document.getElementById('zoning').value || 'Unknown';
+  const notes = document.getElementById('notes').value || '';
+
+  let dealData = '';
+  if (metrics.isLand) {
+    dealData = `
+ASSET TYPE: ${currentAsset}
+ADDRESS: ${address}
+MARKET: ${market}
+ZONING: ${zoning}
+LAND USE INTENT: ${document.getElementById('landUse').value}
+ENTITLEMENT: ${document.getElementById('entitlement').value || 'Unknown'}
+
+FINANCIALS:
+- Asking price: $${(parseFloat(document.getElementById('landAsk').value)||0).toLocaleString()}
+- Acreage: ${document.getElementById('acreage').value || 'N/A'}
+- Buildable SF: ${(parseFloat(document.getElementById('buildableSF').value)||0).toLocaleString()}
+- Price/buildable SF: $${(metrics.pBSF||0).toFixed(2)} [Buy box max: $${bb.landPSFMax.toFixed(2)}/SF]
+- Price/acre: $${Math.round(metrics.pAcre||0).toLocaleString()} [Buy box max: $${bb.landAcreMax.toLocaleString()}/ac]`;
+  } else {
+    dealData = `
+ASSET TYPE: ${currentAsset}
+ADDRESS: ${address}
+MARKET: ${market}
+ZONING: ${zoning}
+TENANCY: ${document.getElementById('tenancy').value || 'Not specified'}
+
+FINANCIALS:
+- Asking price: $${(parseFloat(document.getElementById('askPrice').value)||0).toLocaleString()}
+- Building SF: ${(parseFloat(document.getElementById('buildingSF').value)||0).toLocaleString()}
+- Going-in NOI: $${(parseFloat(document.getElementById('noi').value)||0).toLocaleString()}
+- Going-in cap rate: ${(metrics.cap||0).toFixed(2)}% [Buy box min: ${bb.capMin}%] → ${metrics.capPass === null ? 'N/A' : metrics.capPass ? 'PASS' : 'FAIL'}
+- LTV: ${document.getElementById('ltv').value||'N/A'}% [Buy box max: ${bb.ltvMax}%] → ${metrics.ltvPass === null ? 'N/A' : metrics.ltvPass ? 'PASS' : 'FAIL'}
+- Calculated DSCR: ${metrics.dscr !== null ? metrics.dscr.toFixed(2)+'x' : 'insufficient data'} [Buy box min: ${bb.dscrMin}x] → ${metrics.dscrPass === null ? 'N/A' : metrics.dscrPass ? 'PASS' : 'FAIL'}
+- Clear height: ${document.getElementById('clearHeight').value||'N/A'} ft [Buy box min: ${bb.clearMin} ft]
+- Occupancy: ${document.getElementById('occupancy').value||'N/A'}%`;
+  }
+
+  const activeFlags = Object.entries(flags).filter(([,v]) => v).map(([k]) => k);
+
+  const prompt = `You are the Deal Screener Agent for ${firmName}, a commercial real estate firm. You specialize in industrial, flex/industrial, IOS (Improved Outdoor Storage), and land acquisitions.
+${firmContext ? '\nFIRM CONTEXT: ' + firmContext : ''}
+
+Your job is to evaluate the deal below against the firm's buy box criteria and issue a clear Go / No-Go / Conditional Go verdict with full analytical rationale.
+
+═══ DEAL INPUT ═══
+${dealData}
+
+DEALBREAKER FLAGS CHECKED: ${activeFlags.length > 0 ? activeFlags.join(', ') : 'None'}
+
+ADDITIONAL NOTES FROM BROKER:
+${notes || 'None provided.'}
+
+═══ BUY BOX CRITERIA ═══
+INDUSTRIAL / FLEX:
+- Min going-in cap rate: ${bb.capMin}%
+- Min DSCR: ${bb.dscrMin}x
+- Max LTV: ${bb.ltvMax}%
+- Min clear height: ${bb.clearMin} ft
+LAND:
+- Max price/buildable SF: $${bb.landPSFMax}/SF
+- Max price/acre: $${bb.landAcreMax.toLocaleString()}/ac
+HARD PASS FLAGS: PFOS/PFAS contamination, AE flood zone (both are automatic No-Go)
+
+═══ AGENT INSTRUCTIONS ═══
+Follow the 19-section Acquisition Agent prompt standard:
+
+1. IDENTITY CHECK: Confirm you have enough info to screen this deal. If critical data is missing, note it but proceed with best-effort analysis.
+
+2. VERDICT: Open with one of: [GO] [NO-GO] [CONDITIONAL GO] — a single clear determination.
+
+3. EXECUTIVE SUMMARY (3-4 sentences max): What is this deal, and why is the verdict what it is?
+
+4. BUY BOX SCORECARD: Go through each criterion explicitly. State whether the deal passes or fails each threshold. Be specific — use the actual numbers.
+
+5. DEALBREAKER ANALYSIS: Are any hard-pass flags active? If yes, this is an automatic No-Go and override any positive financials. Explain why.
+
+6. FINANCIAL QUALITY ASSESSMENT: Evaluate the credibility and quality of the deal's financial profile. Are the numbers realistic? Any red flags in the proforma? What should be stress-tested?
+
+7. MARKET & LOCATION ANALYSIS: Does this market fit the firm's target geography? What do you know about this submarket's industrial/land fundamentals?
+
+8. RISK IDENTIFICATION (Top 3 risks): Number them. Be specific to this deal, not generic.
+
+9. DUE DILIGENCE PRIORITIES: What are the first 3 things to verify before going under contract?
+
+10. RECOMMENDED NEXT STEPS: Concrete, actionable — what should happen in the next 48 hours if this is a Go or Conditional Go?
+
+Write in a direct, professional tone. Think like an underwriter, not a salesperson. Call out problems clearly. Be specific with numbers. Total response should be comprehensive but scannable — use the section headers above.`;
+
+  // Show loading
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('loading-area').style.display = 'block';
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('screenBtn').disabled = true;
+
+  const logBox = document.getElementById('logBox');
+  logBox.innerHTML = '';
+
+  const logs = [
+    '> Initializing Deal Screener Agent v1.0...',
+    `> Asset type detected: ${currentAsset}`,
+    `> Market: ${market}`,
+    `> Running buy box pre-check...`,
+    `> Cap rate check: ${metrics.isLand ? 'N/A (land)' : (metrics.capPass === null ? 'insufficient data' : metrics.capPass ? 'PASS' : 'FAIL')}`,
+    `> DSCR check: ${metrics.isLand ? 'N/A (land)' : (metrics.dscrPass === null ? 'insufficient data' : metrics.dscrPass ? 'PASS' : 'FAIL')}`,
+    `> Dealbreaker flags: ${activeFlags.length > 0 ? activeFlags.join(', ') : 'none detected'}`,
+    '> Sending to Claude AI agent...',
+    '> Analyzing deal structure, market, and risk profile...',
+  ];
+
+  for (let i = 0; i < logs.length; i++) {
+    await new Promise(r => setTimeout(r, 220 + i * 140));
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.style.animationDelay = '0ms';
+    line.style.color = logs[i].includes('FAIL') || logs[i].includes('flag') && activeFlags.length > 0 ? 'var(--nogo)' : logs[i].includes('PASS') ? 'var(--go)' : 'var(--text2)';
+    line.textContent = logs[i];
+    logBox.appendChild(line);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  const cursor = document.createElement('span');
+  cursor.className = 'log-cursor';
+  logBox.appendChild(cursor);
 
   try {
-    // Search for forwarded TBJ emails — handles both direct and forwarded formats
-    const searchResp = await fetch('https://gmail.mcp.claude.com/mcp', {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
       body: JSON.stringify({
-        method: 'tools/call',
-        params: {
-          name: 'gmail_search_messages',
-          arguments: {
-            q: '(from:mike@southatlanticsites.com subject:Fwd) OR (from:reply@news.bizjournals.com) newer_than:60d',
-            maxResults: 30
-          }
-        }
-      })
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
     });
 
-    if(!searchResp.ok) throw new Error('Gmail MCP unreachable');
-    const searchData = await searchResp.json();
-    const messages = searchData?.result?.messages || [];
-
-    if(!messages.length){
-      btn.disabled=false;
-      btn.textContent='⟳ Refresh Feed';
-      return;
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API error ' + res.status);
     }
 
-    const existing = new Set(allStories.map(s=>s.title.toLowerCase().substring(0,60)));
-    let added = 0;
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'No response received.';
 
-    for(const msg of messages.slice(0,20)){
-      try{
-        const msgResp = await fetch('https://gmail.mcp.claude.com/mcp', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            method: 'tools/call',
-            params: {
-              name: 'gmail_read_message',
-              arguments: { messageId: msg.id }
-            }
-          })
-        });
-        const msgData = await msgResp.json();
-        const email = msgData?.result;
-        if(!email) continue;
+    cursor.remove();
 
-        // Extract body and date
-        const body = email.body || '';
-        const dateIso = email.headers?.Date ? new Date(email.headers.Date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    // Parse verdict
+    let verdictType = 'conditional';
+    if (text.includes('[NO-GO]') || text.includes('NO-GO')) verdictType = 'nogo';
+    else if (text.includes('[GO]') && !text.includes('NO-GO') && !text.includes('CONDITIONAL')) verdictType = 'go';
+    if (activeFlags.includes('pfos') || activeFlags.includes('flood')) verdictType = 'nogo';
 
-        // Decode a base64-encoded TBJ redirect URL to get the real article URL
-        function decodeTBJUrl(b64) {
-          try {
-            const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
-            const decoded = atob(padded);
-            return decoded.split('?')[0]; // strip UTM params
-          } catch(e) { return null; }
-        }
+    // Show result
+    document.getElementById('loading-area').style.display = 'none';
+    document.getElementById('result-area').style.display = 'block';
 
-        // Parse digest: extract (headline, url) pairs from the email body
-        // TBJ format: headline text on one line, then <url> on next line(s)
-        const digestStories = [];
-        const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
+    // Verdict banner
+    const banner = document.getElementById('verdictBanner');
+    const icons = { go: '✓', nogo: '✕', conditional: '◐' };
+    const labels = { go: 'Verdict', nogo: 'Verdict', conditional: 'Verdict' };
+    const titles2 = { go: 'Go — proceed to LOI', nogo: 'No-Go — pass on this deal', conditional: 'Conditional Go — proceed with caution' };
+    const colors = { go: 'var(--go)', nogo: 'var(--nogo)', conditional: 'var(--warn)' };
+    banner.className = `verdict-banner verdict-${verdictType}`;
+    banner.innerHTML = `
+      <div class="verdict-icon" style="color:${colors[verdictType]}">${icons[verdictType]}</div>
+      <div>
+        <div class="verdict-label" style="color:${colors[verdictType]}">${labels[verdictType]}</div>
+        <div class="verdict-title" style="color:${colors[verdictType]}">${titles2[verdictType]}</div>
+      </div>`;
 
-        for(let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i];
-          const nextLine = lines[i+1] || '';
-
-          // Look for a TBJ click redirect URL
-          const urlMatch = nextLine.match(/https?:\/\/link\.bizjournals\.com\/click\/[^/]+\/([A-Za-z0-9+/=_-]+)\//);
-          if(!urlMatch) continue;
-
-          const realUrl = decodeTBJUrl(urlMatch[1]);
-          if(!realUrl || !realUrl.includes('bizjournals.com/triangle/news/')) continue;
-
-          // The line before the URL is the headline — skip navigation/boilerplate
-          const skipPhrases = ['Read full story', 'View in Browser', 'Quick Links', 'Unsubscribe', 'Manage Preferences', 'UPCOMING EVENTS', 'Read more', 'START YOUR FREE TRIAL'];
-          if(skipPhrases.some(s => line.includes(s))) continue;
-          if(line.length < 10 || line.startsWith('<') || line.startsWith('http')) continue;
-
-          digestStories.push({ title: line, link: realUrl });
-        }
-
-        // If no digest stories found, fall back to subject line + first bizjournals URL
-        if(!digestStories.length) {
-          const rawSubject = email.headers?.Subject || '';
-          const subject = rawSubject.replace(/^(Fwd?:\s*)+/i,'').trim();
-          if(subject) {
-            const directUrl = body.match(/https?:\/\/(?:www\.)?bizjournals\.com\/triangle\/news\/[^\s"<>)]+/);
-            digestStories.push({ title: subject, link: directUrl ? directUrl[0] : 'https://www.bizjournals.com/triangle/news/commercial-real-estate' });
-          }
-        }
-
-        // Process each story from the digest
-        for(const ds of digestStories) {
-          const titleKey = ds.title.toLowerCase().substring(0,60);
-          if(existing.has(titleKey)) continue;
-          existing.add(titleKey);
-
-          const fullText = ds.title;
-          const detectedLoc = detectLoc(fullText);
-
-          if(detectedLoc) {
-            allStories.unshift({
-              title: ds.title.substring(0,160),
-              link: ds.link,
-              notes: '',
-              tag: detectTag(fullText),
-              loc: detectedLoc,
-              date: dateIso,
-              source: 'gmail',
-              manual: false,
-            });
-            added++;
-          } else {
-            addNewsStory({
-              title: ds.title.substring(0,160),
-              link: ds.link,
-              notes: '',
-              tag: detectTag(fullText),
-              date: dateIso,
-            });
-          }
-        }
-      }catch(e){ console.warn('Failed to read message', msg.id, e.message); }
+    // Score cells
+    const scoreRow = document.getElementById('scoreRow');
+    if (metrics.isLand) {
+      scoreRow.innerHTML = `
+        <div class="score-cell">
+          <div class="sc-label">Price / BSF</div>
+          <div class="sc-val ${metrics.bsfPass === true ? 'c-go' : metrics.bsfPass === false ? 'c-nogo' : 'c-muted'}">$${(metrics.pBSF||0).toFixed(2)}</div>
+          <div class="sc-status ${metrics.bsfPass === true ? 'c-go' : metrics.bsfPass === false ? 'c-nogo' : 'c-muted'}">${metrics.bsfPass === null ? '—' : metrics.bsfPass ? '✓ Pass' : '✕ Fail (max $'+bb.landPSFMax+')'}</div>
+        </div>
+        <div class="score-cell">
+          <div class="sc-label">Price / acre</div>
+          <div class="sc-val ${metrics.acrePass === true ? 'c-go' : metrics.acrePass === false ? 'c-nogo' : 'c-muted'}">$${Math.round(metrics.pAcre||0).toLocaleString()}</div>
+          <div class="sc-status ${metrics.acrePass === true ? 'c-go' : metrics.acrePass === false ? 'c-nogo' : 'c-muted'}">${metrics.acrePass === null ? '—' : metrics.acrePass ? '✓ Pass' : '✕ Fail'}</div>
+        </div>
+        <div class="score-cell">
+          <div class="sc-label">Flags</div>
+          <div class="sc-val ${activeFlags.length > 0 ? 'c-nogo' : 'c-go'}">${activeFlags.length}</div>
+          <div class="sc-status ${activeFlags.length > 0 ? 'c-nogo' : 'c-go'}">${activeFlags.length > 0 ? '✕ Hard pass' : '✓ Clean'}</div>
+        </div>`;
+    } else {
+      scoreRow.innerHTML = `
+        <div class="score-cell">
+          <div class="sc-label">Cap rate</div>
+          <div class="sc-val ${metrics.capPass === true ? 'c-go' : metrics.capPass === false ? 'c-nogo' : 'c-muted'}">${metrics.cap > 0 ? metrics.cap.toFixed(2)+'%' : '—'}</div>
+          <div class="sc-status ${metrics.capPass === true ? 'c-go' : metrics.capPass === false ? 'c-nogo' : 'c-muted'}">${metrics.capPass === null ? 'N/A' : metrics.capPass ? '✓ Pass (min '+bb.capMin+'%)' : '✕ Fail (min '+bb.capMin+'%)'}</div>
+        </div>
+        <div class="score-cell">
+          <div class="sc-label">DSCR</div>
+          <div class="sc-val ${metrics.dscrPass === true ? 'c-go' : metrics.dscrPass === false ? 'c-nogo' : 'c-muted'}">${metrics.dscr !== null ? metrics.dscr.toFixed(2)+'x' : '—'}</div>
+          <div class="sc-status ${metrics.dscrPass === true ? 'c-go' : metrics.dscrPass === false ? 'c-nogo' : 'c-muted'}">${metrics.dscrPass === null ? 'N/A' : metrics.dscrPass ? '✓ Pass (min '+bb.dscrMin+'x)' : '✕ Fail (min '+bb.dscrMin+'x)'}</div>
+        </div>
+        <div class="score-cell">
+          <div class="sc-label">Flags</div>
+          <div class="sc-val ${activeFlags.length > 0 ? 'c-nogo' : 'c-go'}">${activeFlags.length}</div>
+          <div class="sc-status ${activeFlags.length > 0 ? 'c-nogo' : 'c-go'}">${activeFlags.length > 0 ? '✕ Hard pass' : '✓ Clean'}</div>
+        </div>`;
     }
 
-    btn.disabled=false;
-    btn.textContent='⟳ Refresh Feed';
-    renderAll();
-    renderNews();
-    updateNewsTabCount();
-    countEl.textContent=getFiltered().length+' stories';
-    if(added>0){
-      const em=document.getElementById('empty-msg');
-      if(em) em.remove();
-    }
+    document.getElementById('resultProse').textContent = text;
 
-  } catch(e) {
-    console.error('Gmail feed error:', e);
-    btn.disabled=false;
-    btn.textContent='⟳ Refresh Feed';
+    // Save to history
+    history.unshift({
+      address,
+      asset: currentAsset,
+      market,
+      verdict: verdictType,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text,
+    });
+    renderHistory();
+
+  } catch (err) {
+    cursor.remove();
+    const errLine = document.createElement('div');
+    errLine.className = 'log-line';
+    errLine.style.color = 'var(--nogo)';
+    errLine.textContent = '> ERROR: ' + err.message;
+    logBox.appendChild(errLine);
+
+    const retry = document.createElement('div');
+    retry.style.marginTop = '14px';
+    retry.innerHTML = `<button class="btn" onclick="resetScreen()" style="font-size:12px;">← Back to form</button>`;
+    logBox.appendChild(retry);
   }
+
+  document.getElementById('screenBtn').disabled = false;
 }
 
-// ── AI Extraction ──────────────────────────────────────────────
-async function runExtract(){
-  const text=document.getElementById('in-text').value.trim();
-  const btn=document.getElementById('ai-btn');
-  const status=document.getElementById('ai-status');
-  if(!text){status.textContent='Paste article text first.';status.style.color='var(--red)';return;}
-
-  btn.disabled=true;btn.textContent='Extracting...';
-  status.textContent='Calling Claude...';status.style.color='var(--navy-mid)';
-
-  const locList=PLACES.map(p=>p.name).join(', ');
-  const prompt=`Extract CRE deal info from this Triangle Business Journal article. Return ONLY valid JSON, no markdown.
-
-{
-  "title": "concise deal headline, max 120 chars",
-  "url": "the bizjournals.com article URL if present in text, else empty string",
-  "location": "best match from: ${locList}",
-  "tag": "one of: industrial, development, office, land, retail",
-  "notes": "key facts: SF or acres, price or $/SF, tenant/buyer/seller, address if mentioned — 1-2 sentences",
-  "date": "YYYY-MM-DD if found, else today ${new Date().toISOString().slice(0,10)}"
+function resetScreen() {
+  document.getElementById('form-area').style.display = 'block';
+  document.getElementById('loading-area').style.display = 'none';
+  document.getElementById('result-area').style.display = 'none';
 }
 
-Article:
-${text.substring(0,4000)}`;
-
-  try{
-    const resp=await fetch(ANTHROPIC_API,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,
-        messages:[{role:'user',content:prompt}]})
-    });
-    const data=await resp.json();
-    const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
-    const p=JSON.parse(raw);
-    if(p.title)document.getElementById('in-title').value=p.title;
-    if(p.url)document.getElementById('in-url').value=p.url;
-    if(p.notes)document.getElementById('in-notes').value=p.notes;
-    if(p.date)document.getElementById('ai-btn').dataset.date=p.date;
-    if(p.location){
-      const sel=document.getElementById('in-loc');
-      const opt=Array.from(sel.options).find(o=>o.value===p.location);
-      if(opt)sel.value=p.location;
-    }
-    if(p.tag){
-      const sel=document.getElementById('in-tag');
-      const opt=Array.from(sel.options).find(o=>o.value===p.tag);
-      if(opt)sel.value=p.tag;
-    }
-    status.textContent='Done — review then hit Pin to Map.';status.style.color='var(--green)';
-    btn.textContent='⚡ Extract & Auto-Fill';btn.disabled=false;
-  }catch(e){
-    status.textContent='Extract failed: '+e.message;status.style.color='var(--red)';
-    btn.textContent='⚡ Extract & Auto-Fill';btn.disabled=false;
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  if (history.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span>○</span>No deals screened yet.</div>';
+    return;
   }
-}
-
-// ── Add story ──────────────────────────────────────────────────
-function addStory(){
-  const title=document.getElementById('in-title').value.trim();
-  const url=document.getElementById('in-url').value.trim();
-  const loc=document.getElementById('in-loc').value;
-  const tag=document.getElementById('in-tag').value;
-  const notes=document.getElementById('in-notes').value.trim();
-  const date=document.getElementById('ai-btn').dataset.date||new Date().toISOString().slice(0,10);
-  const msg=document.getElementById('add-msg');
-  if(!title){msg.textContent='Headline required.';msg.style.color='var(--red)';return;}
-
-  const story={title,link:url||'https://www.bizjournals.com/triangle/news/commercial-real-estate',
-    notes,tag,loc,date,source:'manual',manual:true,_id:Date.now()};
-  allStories.unshift(story);
-  const pins=loadPins();pins.unshift(story);savePins(pins);
-
-  msg.textContent='Pinned!';msg.style.color='var(--green)';
-  ['in-title','in-url','in-notes','in-text'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ai-status').textContent='';
-  delete document.getElementById('ai-btn').dataset.date;
-  setTimeout(()=>{msg.textContent='';},2500);
-  document.querySelector('.stab[data-tab="stories"]').click();
-  renderAll();
-}
-
-// ── Render ─────────────────────────────────────────────────────
-function getFiltered(){
-  let s=allStories;
-  if(activeFilter!=='all')s=s.filter(x=>x.tag===activeFilter);
-  if(activeDays!=='all'){
-    const cut=Date.now()-parseInt(activeDays)*86400000;
-    s=s.filter(x=>x.manual||dateMs(x.date)>cut);
-  }
-  return s;
-}
-
-function renderAll(){
-  activeMarkers.forEach(m=>map.removeLayer(m));
-  activeMarkers=[];
-  const panel=document.getElementById('story-panel');
-  // keep empty-msg if present, clear cards
-  const cards=panel.querySelectorAll('.story-card');
-  cards.forEach(c=>c.remove());
-
-  const filtered=getFiltered();
-  document.getElementById('story-count').textContent=filtered.length+' stories';
-  document.querySelector('.stab[data-tab="stories"]').textContent='Feed ('+filtered.length+')';
-
-  // Show/hide static empty-msg
-  const emptyMsg = document.getElementById('empty-msg');
-  if(emptyMsg) emptyMsg.style.display = filtered.length===0 ? 'block' : 'none';
-
-  filtered.forEach(story=>{
-    const tagKey=story.manual?'manual':story.tag;
-    const tagStyle=TAG_CSS[tagKey]||TAG_CSS.office;
-    const place=findPlace(story.loc);
-    const sourceLabel=story.source==='gmail'?'via TBJ Newsletter':story.source==='twitter'?'via @TriangleBIZJrnl':story.source==='manual'?'manually pinned':'seed data';
-
-    const card=document.createElement('div');
-    card.className='story-card';
-    card.innerHTML=
-      `<span class="stag" style="${tagStyle}">${story.manual?'pinned':story.tag}</span>`+
-      `<div class="stitle">${story.title}</div>`+
-      `<div class="smeta">${story.loc||'Triangle'} &middot; ${fmtDate(story.date)}</div>`+
-      (story.notes?`<div class="snotes">${story.notes}</div>`:'')+
-      (story.link?`<a class="slink" href="${story.link}" target="_blank">Read on TBJ &rarr;</a>`:'')+
-      `<div class="ssource">${sourceLabel}</div>`;
-
-    if(place){
-      if(!story._lat){story._lat=jitter(place.lat);story._lng=jitter(place.lng);}
-      const m=L.marker([story._lat,story._lng],{icon:makeIcon(story.tag,story.manual)}).addTo(map);
-      m.bindPopup(
-        `<span class="p-tag" style="${tagStyle}">${story.manual?'pinned':story.tag}</span>`+
-        `<div class="p-title">${story.title}</div>`+
-        `<div class="p-meta">${story.loc||'Triangle'} &middot; ${fmtDate(story.date)}</div>`+
-        (story.notes?`<div class="p-notes">${story.notes}</div>`:'')+
-        (story.link?`<a class="p-link" href="${story.link}" target="_blank">Read full story on TBJ &rarr;</a>`:'')+
-        `<div class="p-source">${sourceLabel}</div>`,
-        {maxWidth:260}
-      );
-      m.on('click',()=>{
-        panel.querySelectorAll('.story-card').forEach(c=>c.classList.remove('hl'));
-        card.classList.add('hl');
-        card.scrollIntoView({behavior:'smooth',block:'nearest'});
-      });
-      card.addEventListener('click',()=>{
-        panel.querySelectorAll('.story-card').forEach(c=>c.classList.remove('hl'));
-        card.classList.add('hl');
-        map.setView([story._lat,story._lng],13,{animate:true});
-        m.openPopup();
-      });
-      activeMarkers.push(m);
-    }else{
-      card.style.opacity='0.55';
-      card.title='No Triangle location detected';
-    }
-    panel.appendChild(card);
-  });
-}
-
-// ── Map ────────────────────────────────────────────────────────
-function initMap(){
-  map=L.map('map');
-  map.setView([35.82,-78.80],10);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom:19
-  }).addTo(map);
-}
-
-// ── Boot ───────────────────────────────────────────────────────
-function boot(){
-  initMap();
-
-  // Location dropdown
-  const locSel=document.getElementById('in-loc');
-  PLACES.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;locSel.appendChild(o);});
-
-  // Load seed + saved pins
-  SEED.forEach(s=>allStories.push(Object.assign({},s)));
-  // Load seed news into news tab
-  SEED_NEWS.forEach(s=>addNewsStory(s));
-  const pins=loadPins();
-  const seedTitles=new Set(SEED.map(s=>s.title));
-  pins.forEach(p=>{if(!seedTitles.has(p.title))allStories.unshift(p);});
-
-  // Filter buttons
-  document.querySelectorAll('.fbtn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilter=btn.dataset.tag;
-      renderAll();
-    });
-  });
-
-  // Date filter
-  document.getElementById('date-filter').addEventListener('change',e=>{
-    activeDays=e.target.value;renderAll();
-  });
-
-  // Tabs
-  document.querySelectorAll('.stab').forEach(tab=>{
-    tab.addEventListener('click',()=>{
-      document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      const t=tab.dataset.tab;
-      document.getElementById('story-panel').style.display=t==='stories'?'block':'none';
-      document.getElementById('news-panel').style.display=t==='news'?'block':'none';
-      document.getElementById('add-panel').style.display=t==='add'?'block':'none';
-    });
-  });
-
-  renderAll();
-}
-
-// ── News Tab ──────────────────────────────────────────────────
-const newsStories = [];
-
-function addNewsStory(story) {
-  // Dedup by title
-  if(newsStories.some(n => n.title.toLowerCase().substring(0,60) === story.title.toLowerCase().substring(0,60))) return;
-  newsStories.unshift(story);
-  renderNews();
-  updateNewsTabCount();
-}
-
-function updateNewsTabCount() {
-  const btn = document.querySelector('.stab[data-tab="news"]');
-  if(btn) btn.textContent = newsStories.length > 0 ? `📰 News (${newsStories.length})` : '📰 News';
-}
-
-const TAG_COLORS = {industrial:'#d97706',development:'#0369a1',office:'#7c3aed',retail:'#be185d',land:'#15803d',other:'#6b7280'};
-
-function renderNews() {
-  const panel = document.getElementById('news-panel');
-  const em = document.getElementById('news-empty-msg');
-  if(!newsStories.length) { if(em) em.style.display='block'; return; }
-  if(em) em.style.display='none';
-
-  // Remove existing cards
-  panel.querySelectorAll('.news-card').forEach(c => c.remove());
-
-  newsStories.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'news-card';
-    const color = TAG_COLORS[s.tag] || TAG_COLORS.other;
-    const dateStr = s.date ? new Date(s.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
-    div.innerHTML = `
-      <div class="news-meta">
-        <span class="news-badge" style="background:${color}22;color:${color}">${s.tag||'news'}</span>
-        ${dateStr}
+  container.innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="expandHistory(${i})">
+      <div class="hist-verdict hist-${h.verdict}"></div>
+      <div class="hist-info">
+        <div class="hist-address">${h.address || 'No address'}</div>
+        <div class="hist-meta">${h.asset} · ${h.market}</div>
       </div>
-      <h4>${s.title}</h4>
-      ${s.notes ? `<div class="news-notes">${s.notes}</div>` : ''}
-      ${s.link ? `<a href="${s.link}" target="_blank">Read on TBJ →</a>` : ''}
-    `;
-    panel.appendChild(div);
-  });
+      <div class="hist-time">${h.time}</div>
+    </div>`).join('');
 }
 
-boot();
+function expandHistory(i) {
+  const h = history[i];
+  showPanel('screen');
+  resetScreen();
+  document.getElementById('result-area').style.display = 'block';
+  document.getElementById('form-area').style.display = 'none';
+
+  const verdictType = h.verdict;
+  const colors = { go: 'var(--go)', nogo: 'var(--nogo)', conditional: 'var(--warn)' };
+  const icons = { go: '✓', nogo: '✕', conditional: '◐' };
+  const titles2 = { go: 'Go — proceed to LOI', nogo: 'No-Go — pass on this deal', conditional: 'Conditional Go — proceed with caution' };
+  const banner = document.getElementById('verdictBanner');
+  banner.className = `verdict-banner verdict-${verdictType}`;
+  banner.innerHTML = `
+    <div class="verdict-icon" style="color:${colors[verdictType]}">${icons[verdictType]}</div>
+    <div>
+      <div class="verdict-label" style="color:${colors[verdictType]}">Verdict</div>
+      <div class="verdict-title" style="color:${colors[verdictType]}">${titles2[verdictType]}</div>
+    </div>`;
+
+  document.getElementById('scoreRow').innerHTML = '';
+  document.getElementById('resultProse').textContent = h.text;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadSettings();
+if (!apiKey) {
+  document.getElementById('apiModal').style.display = 'flex';
+} else {
+  document.getElementById('apiModal').style.display = 'none';
+}
 </script>
 </body>
 </html>
